@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
     gnuplotFunction += ';';
     plot.close();
 
-    std::string gnuplotCommand = "gnuplot -e \"" + gnuplotFunction + " plot [0:3000] f(x), 'Data/plot.dat'; pause -1\"";
+    std::string gnuplotCommand = "gnuplot -e \"" + gnuplotFunction + " plot [-700:700] f(x), 'Data/plot.dat'; pause -1\"";
     std::cout << gnuplotCommand << std::endl;
     system(gnuplotCommand.c_str());
   }

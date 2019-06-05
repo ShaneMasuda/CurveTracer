@@ -51,3 +51,5 @@ public:
 };
 
 int findFirstPrimitiveHit(std::vector<std::vector<double>> rootList, Curve3d c, Ray ray, double &t);
+
+int findIntersectedPrimitive(std::vector<Primitives*> primitives, Curve3d c, double &t, double t0, double tf);

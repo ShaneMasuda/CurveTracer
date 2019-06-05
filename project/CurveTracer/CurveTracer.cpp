@@ -106,6 +106,7 @@ int main(int argc, char* argv[])
       Curve3d c;
       int index;
       index = LightPath::March(ray, metric, primitives, 100, t, c);
+      std::cout << "DONE\n";
       /*if (acos(ray.D * R) >= alphaMax)
       {
         index = LightPath::March(ray, metric, primitives, 100, t, c);
@@ -120,10 +121,10 @@ int main(int argc, char* argv[])
         }
         index = findFirstPrimitiveHit(rootList, c, Ray(ray.O, R * -1.0), t);
       }*/
-      if (acos(ray.D * R) >= alphaMax && index == 1)
+      /* if (acos(ray.D * R) >= alphaMax && index == 1)
       {
         index = 0;
-      }
+      } */
       if (index == 0)
       {
         image[y][x] = png::rgb_pixel(0, 0, 0);

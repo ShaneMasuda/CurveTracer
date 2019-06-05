@@ -137,8 +137,6 @@ std::vector<double> Disk::intersects(Curve3d c)
 
 int findFirstPrimitiveHit(std::vector<std::vector<double>> rootList, Curve3d c, Ray ray, double &t)
 {
-  const double r = ray.O.dist(Point3d(0, 0, 0));
-  const Vector3d X = ray.O * (1.0 / r);
   int index = -1;
   double smallestPositiveDistance = DBL_MAX;
   for (int i = 0; i < rootList.size(); i++)
@@ -146,12 +144,34 @@ int findFirstPrimitiveHit(std::vector<std::vector<double>> rootList, Curve3d c, 
     for (double root : rootList[i])
     {
       Point3d p(evaluate(c.components[0], root), evaluate(c.components[1], root), evaluate(c.components[2], root));
-      double distance = (X * -1.0) * (p - ray.O);
+      double distance = ray.D * (p - ray.O);
       if (distance > 0 && distance < smallestPositiveDistance)
       {
           t = root;
           index = i;
           smallestPositiveDistance = distance;
+      }
+    }
+  }
+  return index;
+}
+
+int findIntersectedPrimitive(std::vector<Primitives*> primitives, Curve3d c, double &t, double t0, double tf)
+{
+  std::vector<std::vector<double>> rootList;
+  for (Primitives* primitive : primitives)
+  {
+    rootList.push_back(primitive->intersects(c));
+  }
+  int index = -1;
+  for (int i = 0; i < rootList.size(); i++)
+  {
+    for (double root : rootList[i])
+    {
+      if (root >= t0 && root <= tf)
+      {
+        t = root;
+        index = i;
       }
     }
   }

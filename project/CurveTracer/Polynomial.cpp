@@ -52,6 +52,16 @@ double evaluate(Polynomial &a, double value)
   return result;
 }
 
+Polynomial derivative(Polynomial &a)
+{
+  Polynomial d;
+  for (int i = 1; i < a.coefficients.size(); i++)
+  {
+    d.coefficients.push_back(a.coefficients[i] * (double)i);
+  }
+  return d;
+}
+
 double minimize(Polynomial &a, double value)
 {
   if (a.coefficients.size() < 2)

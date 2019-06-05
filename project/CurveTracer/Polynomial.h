@@ -14,6 +14,8 @@ std::vector<double> getRealRoots(Polynomial a);
 
 double evaluate(Polynomial &a, double value);
 
+Polynomial derivative(Polynomial &a);
+
 double minimize(Polynomial &a, double value);
 
 Polynomial operator +(Polynomial a, Polynomial b);

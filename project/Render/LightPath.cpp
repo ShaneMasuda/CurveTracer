@@ -89,6 +89,73 @@ Curve3d LightPath::ModelQuery(Ray &ray, const Metric &metric) {
   return result;
 }
 
+/* int LightPath::March(Ray ray, const Metric &metric, std::vector<Primitives*> primitives, double marchDistance, double &t, Curve3d &c)
+{
+  int index = -1;
+  int counter = 0;
+  double r;
+  Vector3d R;
+  while (counter < 30)
+  {
+    r = ray.O.dist(metric.origin);
+    if (r < 1.1 * metric.rs)
+    {
+      return 0;
+    }
+    R = (ray.O - metric.origin) * (1.0 / r);
+    c = ModelQuery(ray, metric);
+    std::cout << "Direction: " << ray.O.x << '+'<< ray.D.x << "t," << ray.O.y << '+'<< ray.D.y << "t," << ray.O.z << '+'<< ray.D.z << "t\n";
+    std::cout << "x: " << c.components[0].coefficients[0] << '+' << c.components[0].coefficients[1] << "t+" << c.components[0].coefficients[2] << "t^2\n";
+    std::cout << "y: " << c.components[1].coefficients[0] << '+' << c.components[1].coefficients[1] << "t+" << c.components[1].coefficients[2] << "t^2\n";
+    std::cout << "z: " << c.components[2].coefficients[0] << '+' << c.components[2].coefficients[1] << "t+" << c.components[2].coefficients[2] << "t^2\n";
+    std::vector<std::vector<double>> rootList;
+    for (Primitives* primitive : primitives)
+    {
+      rootList.push_back(primitive->intersects(c));
+    }
+
+    // Find the t value where the curve is highest
+    Vector3d Y = (ray.D - R * (R * ray.D)).normalize();
+    std::vector<double> minima = getRealRoots(Y.x * derivative(c.components[0]) + Y.y * derivative(c.components[1]) + Y.z * derivative(c.components[2]));
+    assert(minima.size() == 1);
+    double minimum = minima[0];
+
+    double scale = ray.D * R;
+    double sign = scale > 0 ? 1.0 : -1.0;
+    if (r < 6.0 * metric.rs)
+    {
+      sign = -1.0;
+    }
+    index = findFirstPrimitiveHit(rootList, c, Ray(ray.O, R * sign), t);
+    if (sign > 0)
+    {
+      std::cout << "t: " << r << ' ' << 2*r << '\n';
+      if (t >= r && t <= 2.0 * r)
+      {
+        return index;
+      }
+      Point3d O(evaluate(c.components[0], 2.0 * r), evaluate(c.components[1], 2.0 * r), evaluate(c.components[2], 2.0 * r));
+      Point3d D(minimize(c.components[0], 2.0 * r), minimize(c.components[1], 2.0 * r), minimize(c.components[2], 2.0 * r));
+      ray = Ray(O, (D * (minimum > 2.0 * r ? 1.0 : -1.0)).normalize());
+      counter++;
+    }
+    else
+    {
+      std::cout << "t: " << r << ' ' << 100 << '\n';
+      if (t >= 100 && t <= r)
+      {
+        return index;
+      }
+      Point3d O(evaluate(c.components[0], 100), evaluate(c.components[1], 100), evaluate(c.components[2], 100));
+      Point3d D(minimize(c.components[0], 100), minimize(c.components[1], 100), minimize(c.components[2], 100));
+      ray = Ray(O, (D * (minimum < 100? 1.0 : -1.0)).normalize());
+      counter++;
+    }
+  }
+  // std::cout << "Too many iterations\n";
+  return index;
+} */
+
 int LightPath::March(Ray ray, const Metric &metric, std::vector<Primitives*> primitives, double marchDistance, double &t, Curve3d &c)
 {
   int index = -1;
@@ -104,39 +171,47 @@ int LightPath::March(Ray ray, const Metric &metric, std::vector<Primitives*> pri
     }
     R = (ray.O - metric.origin) * (1.0 / r);
     c = ModelQuery(ray, metric);
-    /* std::cout << "Origin: " << ray.O.x << ' ' << ray.O.y << ' ' << ray.O.z << '\n';
-    std::cout << "Direction: " << ray.D.x << ' ' << ray.D.y << ' ' << ray.D.z << '\n';
+    std::cout << "Direction: " << ray.O.x << '+'<< ray.D.x << "t," << ray.O.y << '+'<< ray.D.y << "t," << ray.O.z << '+'<< ray.D.z << "t\n";
     std::cout << "x: " << c.components[0].coefficients[0] << '+' << c.components[0].coefficients[1] << "t+" << c.components[0].coefficients[2] << "t^2\n";
     std::cout << "y: " << c.components[1].coefficients[0] << '+' << c.components[1].coefficients[1] << "t+" << c.components[1].coefficients[2] << "t^2\n";
-    std::cout << "z: " << c.components[2].coefficients[0] << '+' << c.components[2].coefficients[1] << "t+" << c.components[2].coefficients[2] << "t^2\n"; */
-    std::vector<std::vector<double>> rootList;
-    for (Primitives* primitive : primitives)
+    std::cout << "z: " << c.components[2].coefficients[0] << '+' << c.components[2].coefficients[1] << "t+" << c.components[2].coefficients[2] << "t^2\n";
+
+    // Find the t value where the curve is highest
+    Vector3d Y = (ray.D - R * (R * ray.D)).normalize();
+    std::vector<double> minima = getRealRoots(Y.x * derivative(c.components[0]) + Y.y * derivative(c.components[1]) + Y.z * derivative(c.components[2]));
+    assert(minima.size() == 1);
+    double minimum = minima[0];
+
+    double emissionAngle = acos(ray.D * R);
+    std::cout << emissionAngle << '\n';
+
+    if (emissionAngle < M_PI / 2.0)
     {
-      rootList.push_back(primitive->intersects(c));
-    }
-    index = findFirstPrimitiveHit(rootList, c, Ray(ray.O, R * -1.0), t);
-    double sign = ray.D * R > 0 ? 1.0 : -1.0;
-    if (ray.D * R > 0)
-    {
-      // std::cout << "t: " << r << ' ' << t << '\n';
-      // std::cout << "Travelling away from the black hole\n";
-      return index;
+      std::cout << "t: " << r << ' ' << 2*r << '\n';
+      index = findIntersectedPrimitive(primitives, c, t, r, 2.0 * r);
+      if (index != -1)
+      {
+        return index;
+      }
+      Point3d O(evaluate(c.components[0], 2.0 * r), evaluate(c.components[1], 2.0 * r), evaluate(c.components[2], 2.0 * r));
+      Point3d D(minimize(c.components[0], 2.0 * r), minimize(c.components[1], 2.0 * r), minimize(c.components[2], 2.0 * r));
+      ray = Ray(O, (D * (minimum > 2.0 * r ? -1.0 : 1.0)).normalize());
+      counter++;
     }
     else
     {
-      // std::cout << "t: " << r << ' ' << 0 << '\n';
-      if (t > 0 && t < r)
+      std::cout << "t: " << 100 << ' ' << r << '\n';
+      index = findIntersectedPrimitive(primitives, c, t, 100, r);
+      if (index != -1)
       {
-        // std::cout << "Intersected something while travelling towards the black hole\n";
         return index;
       }
-      Point3d O(evaluate(c.components[0], 0), evaluate(c.components[1], 0), evaluate(c.components[2], 0));
-      Point3d D(minimize(c.components[0], 0), minimize(c.components[1], 0), minimize(c.components[2], 0));
-      ray = Ray(O, (D * -1.0).normalize());
+      Point3d O(evaluate(c.components[0], 100), evaluate(c.components[1], 100), evaluate(c.components[2], 100));
+      Point3d D(minimize(c.components[0], 100), minimize(c.components[1], 100), minimize(c.components[2], 100));
+      ray = Ray(O, (D * (minimum < 100 ? -1.0 : 1.0)).normalize());
       counter++;
     }
   }
-  // std::cout << "Too many iterations\n";
   return index;
 }
 
